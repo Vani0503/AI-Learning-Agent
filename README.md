@@ -94,3 +94,6 @@ WHAT I LEARNED BUILDING THIS
 ────────────────────────────────────────────────────────────
 [fill after completion — for README + LinkedIn]
 ═══════════════════════════════════════════════════════════
+
+Execution:
+n8n link  http://localhost:5678
