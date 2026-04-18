@@ -109,3 +109,7 @@ PD-004 — topic_weights as a separate table
 Instead of computing relevance scores on the fly, we pre-compute and store weights per topic. This makes the Ranker faster and more transparent — you can open Airtable and see exactly why certain topics are being prioritized.
 PD-005 — skip_count as a first-class signal
 Explicit negative signal (skipping) is tracked separately from positive signal (reading). Most recommendation systems underweight negative signals. We treat skips as equally important to reads.
+
+Product Decision to log
+PD-006 — Token scopes as a PM consideration
+When designing integrations, PMs need to specify exact permission scopes required — not just "connect to Airtable." Under-scoped tokens cause silent failures. Scope requirements should be part of the technical spec.
