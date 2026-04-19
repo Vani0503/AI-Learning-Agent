@@ -131,4 +131,7 @@ PD-010 — GPT-4o autonomously decided tool call strategy
 Without being told which tools to call in which order, GPT-4o parallelized its search — calling arXiv and HackerNews simultaneously for both primary topics, then fetching RSS feeds. This is emergent agent behavior. The PM's job is to design the tools well enough that the model can reason about when to use them.
 
 PD-011 — Never trust LLMs to generate URLs
-GPT-4o hallucinated an incorrect RSS URL. LLMs should never be responsible for generating specific URLs — they should select from a pre-approved list. The PM's job is to constrain the agent's decisions to safe, validated options
+GPT-4o hallucinated an incorrect RSS URL. LLMs should never be responsible for generating specific URLs — they should select from a pre-approved list. The PM's job is to constrain the agent's decisions to safe, validated options.
+
+Scout fetched content from 3 sources in one loop
+The agent autonomously parallelized its search — calling arXiv twice, HackerNews twice, and RSS twice in a single reasoning turn. This emergent parallelization wasn't instructed — it came from the model reading the search brief and deciding the most efficient strategy. This is why tool descriptions matter: good descriptions enable better agent reasoning.
