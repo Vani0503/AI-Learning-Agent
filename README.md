@@ -109,6 +109,8 @@ PD-004 — topic_weights as a separate table
 Instead of computing relevance scores on the fly, we pre-compute and store weights per topic. This makes the Ranker faster and more transparent — you can open Airtable and see exactly why certain topics are being prioritized.
 PD-005 — skip_count as a first-class signal
 Explicit negative signal (skipping) is tracked separately from positive signal (reading). Most recommendation systems underweight negative signals. We treat skips as equally important to reads.
+PD-007 — Memory package as a single clean JSON object
+Instead of passing raw Airtable rows to the Orchestrator, we format memory into a structured package first. This makes the Orchestrator prompt cleaner, reduces token usage, and makes the system easier to debug. Always transform data before passing it to an LLM
 
 Product Decision to log
 PD-006 — Token scopes as a PM consideration
