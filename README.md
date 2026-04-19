@@ -101,17 +101,25 @@ n8n link  http://localhost:5678
 Product Decisions Log — AI Learning Agent
 PD-001 — Memory backend: Airtable over a database
 Chose Airtable for the memory layer because it gives visual transparency into what the agent is storing and thinking. A PM should be able to see and edit the agent's memory without engineering help. Transparency over performance at this stage.
+
 PD-002 — Six tables, not one
 Separated concerns deliberately — behavior (interactions) is stored separately from knowledge (knowledge_store) because they answer different questions. Behavior tells you what the user did. Knowledge tells you what the user understood. Conflating them would make querying messy and agent prompts less precise.
+
 PD-003 — Seeding curriculum manually
 The initial topic backlog was PM-curated, not AI-generated. This is intentional — the PM defines the learning goal, the agent executes toward it. Fully delegating curriculum design to AI removes accountability for what the user actually learns.
 PD-004 — topic_weights as a separate table
+
 Instead of computing relevance scores on the fly, we pre-compute and store weights per topic. This makes the Ranker faster and more transparent — you can open Airtable and see exactly why certain topics are being prioritized.
+
 PD-005 — skip_count as a first-class signal
 Explicit negative signal (skipping) is tracked separately from positive signal (reading). Most recommendation systems underweight negative signals. We treat skips as equally important to reads.
+
 PD-007 — Memory package as a single clean JSON object
 Instead of passing raw Airtable rows to the Orchestrator, we format memory into a structured package first. This makes the Orchestrator prompt cleaner, reduces token usage, and makes the system easier to debug. Always transform data before passing it to an LLM
 
 Product Decision to log
 PD-006 — Token scopes as a PM consideration
 When designing integrations, PMs need to specify exact permission scopes required — not just "connect to Airtable." Under-scoped tokens cause silent failures. Scope requirements should be part of the technical spec.
+
+PD-008 — Orchestrator output as structured JSON
+The Orchestrator always responds in JSON, never free text. This is a deliberate product decision — structured output means the next agent (Scout) can parse instructions reliably without prompt engineering around variable formats. Structured handoffs between agents are non-negotiable in multi-agent systems.
