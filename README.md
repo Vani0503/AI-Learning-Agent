@@ -123,3 +123,6 @@ When designing integrations, PMs need to specify exact permission scopes require
 
 PD-008 — Orchestrator output as structured JSON
 The Orchestrator always responds in JSON, never free text. This is a deliberate product decision — structured output means the next agent (Scout) can parse instructions reliably without prompt engineering around variable formats. Structured handoffs between agents are non-negotiable in multi-agent systems.
+
+PD-009 — Always parse LLM output before passing between agents
+LLMs sometimes wrap JSON in markdown code blocks. Always add a parsing/cleaning step between agent handoffs. Never assume the output is clean. This prevents cascading failures downstream.
