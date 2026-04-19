@@ -126,3 +126,6 @@ The Orchestrator always responds in JSON, never free text. This is a deliberate 
 
 PD-009 — Always parse LLM output before passing between agents
 LLMs sometimes wrap JSON in markdown code blocks. Always add a parsing/cleaning step between agent handoffs. Never assume the output is clean. This prevents cascading failures downstream.
+
+PD-010 — GPT-4o autonomously decided tool call strategy
+Without being told which tools to call in which order, GPT-4o parallelized its search — calling arXiv and HackerNews simultaneously for both primary topics, then fetching RSS feeds. This is emergent agent behavior. The PM's job is to design the tools well enough that the model can reason about when to use them.
