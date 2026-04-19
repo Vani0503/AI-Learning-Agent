@@ -129,3 +129,6 @@ LLMs sometimes wrap JSON in markdown code blocks. Always add a parsing/cleaning 
 
 PD-010 — GPT-4o autonomously decided tool call strategy
 Without being told which tools to call in which order, GPT-4o parallelized its search — calling arXiv and HackerNews simultaneously for both primary topics, then fetching RSS feeds. This is emergent agent behavior. The PM's job is to design the tools well enough that the model can reason about when to use them.
+
+PD-011 — Never trust LLMs to generate URLs
+GPT-4o hallucinated an incorrect RSS URL. LLMs should never be responsible for generating specific URLs — they should select from a pre-approved list. The PM's job is to constrain the agent's decisions to safe, validated options
