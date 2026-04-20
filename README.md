@@ -138,3 +138,6 @@ The agent autonomously parallelized its search — calling arXiv twice, HackerNe
 
 PD-013 — Full agentic loop completed
 Scout went from search brief → autonomous tool calls → real data fetched → synthesized article list in one reasoning loop. The agent called 6 tools, observed 5 results, and produced structured output ready for the Ranker. This is the complete reason → act → observe → respond cycle working in production.
+
+PD-015 — Full agentic pipeline delivered to inbox
+First successful end-to-end run. Memory → Orchestration → Scout (MCP tool use) → Rank → Explain → Quiz → Deliver. Total tokens used ~5,000. Estimated cost per daily run ~$0.15. The system is working.
