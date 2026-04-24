@@ -1,0 +1,1713 @@
+{
+  "name": "Memory Agent — Read Profile",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        0
+      ],
+      "id": "73aced1b-0b35-4155-8281-ffd6f4fb1f63",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appTlz5lbtlAEdDVs",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "user_profile"
+        },
+        "filterByFormula": "{user_id} = \"user_001\"",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "caa577a4-f089-4166-904c-2ee716588923",
+      "name": "Search records",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "znwzmo63t8zQipXv",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appTlz5lbtlAEdDVs",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl3sf6Bx4wlgCsdn",
+          "mode": "list",
+          "cachedResultName": "topic_weights",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs/tbl3sf6Bx4wlgCsdn"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        192
+      ],
+      "id": "89615964-3ecf-41fd-8bc4-614f51089cc5",
+      "name": "Search records1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "znwzmo63t8zQipXv",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        528,
+        0
+      ],
+      "id": "28750184-b206-4f9b-b865-d09eb8bc3967",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nlet userProfile = null;\nconst topicWeights = [];\n\nfor (const item of items) {\n  const fields = item.json.fields || item.json;\n  \n  // If it has user_id → it's the profile\n  if (fields.user_id) {\n    userProfile = fields;\n  }\n  // If it has topic but no user_id → it's a topic weight row\n  else if (fields.topic) {\n    topicWeights.push(fields);\n  }\n}\n\nconst memoryPackage = {\n  user_profile: userProfile,\n  topic_weights: topicWeights,\n  generated_at: new Date().toISOString()\n};\n\nreturn [{ json: memoryPackage }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        736,
+        -176
+      ],
+      "id": "39c1ff1f-ce9c-4110-8b93-f4f7cb0853f0",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an Orchestrator Agent for a personal AI learning system.\nYour user is an early-stage AI PM preparing for FAANG interviews. They are NOT technical. They understand basics but not deep technical concepts.\n\nContent rules — strictly follow these:\n- ONLY recommend content that a non-technical PM can understand and use in an interview\n- PREFER: project walkthroughs, founder stories, product decisions, opinion pieces, interview experiences from candidates who interviewed at OpenAI/Anthropic/Google/Meta\n- AVOID: research papers, academic content, deep technical implementations, anything with code\n- KEEP IT SIMPLE: if a topic is too technical, find the PM angle on it instead\n\nEvery morning you receive:\n1. user_profile — who they are, their topics, their scores\n2. topic_weights — topics they are learning, with engagement data\n\nYour job is to produce a daily search brief for EXACTLY 2 articles, plus a run manifest that downstream agents will use to validate their work.\n\nRespond ONLY as JSON in this exact format:\n{\n  \"search_brief\": {\n    \"primary_topics\": [\"topic1\", \"topic2\"],\n    \"secondary_topics\": [],\n    \"preferred_sources\": [\"source1\", \"source2\"],\n    \"avoid_topics\": [\"research papers\", \"academic\", \"arxiv\"],\n    \"content_type\": \"project walkthroughs, opinion pieces, interview experiences\",\n    \"reasoning\": \"one sentence explaining today's focus\"\n  },\n  \"run_manifest\": {\n    \"expected_article_count\": 2,\n    \"min_title_length\": 10,\n    \"min_summary_length\": 50,\n    \"require_quiz_questions\": true,\n    \"require_correct_answers\": true,\n    \"retry_budget\": 1,\n    \"abort_on_final_gate_fail\": true\n  }\n}"
+            },
+            {
+              "content": "=Here is today's memory package. Please generate the search brief:\n\n{{ JSON.stringify($json) }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        944,
+        -176
+      ],
+      "id": "21772a23-5235-4da5-b1f1-0218c6fe7a4b",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "zn5D8ertjf16OZ5T",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output[0].content[0].text;\n\nconst cleaned = raw\n  .replace(/^```json\\s*/i, '')\n  .replace(/```\\s*$/,'')\n  .trim();\n\nconst parsed = JSON.parse(cleaned);\n\nreturn { json: parsed };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        -176
+      ],
+      "id": "5dce902c-c11d-4d15-b8bd-703ed5335a31",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const brief = $input.first().json;\n\nconst messages = [\n  {\n    role: \"system\",\n    content: `You are a Scout Agent for an AI PM learning system.\nYour user is an early-stage AI PM preparing for FAANG interviews. They want practical, easy to digest content — NOT heavy academic papers.\nPrioritise in this order:\n1. Project walkthroughs — developers building real products with AI tools\n2. Opinion pieces — takes on where AI is heading, what PMs should know\n3. Interview prep — candidates sharing their OpenAI/Anthropic/FAANG interview experience, questions asked, how to prepare\n4. News — product launches, funding, industry moves\n5. Academic papers — only if they have a clear practical application\nYour tools:\n- search_hackernews: Search HackerNews for AI news, projects, discussions\n- fetch_rss: Fetch articles from RSS feeds\n- search_arxiv: Use sparingly, only for breakthrough practical releases\nStrategy:\n1. Call search_hackernews for primary topics + \"built with\" or \"interview experience\"\n2. Call fetch_rss for preferred sources\n3. Return ONLY 2 best articles — not 3, not 5. Just the 2 most relevant and practical ones.\nReturn format when done:\n{\n  \"articles\": [\n    {\n      \"title\": \"...\",\n      \"url\": \"...\",\n      \"source\": \"...\",\n      \"topic\": \"...\",\n      \"summary\": \"...\"\n    }\n  ]\n}`\n  },\n  {\n    role: \"user\",\n    content: `Here is today's search brief: ${JSON.stringify(brief.search_brief)}`\n  }\n];\n\nconst tools = [\n  {\n    type: \"function\",\n    function: {\n      name: \"search_arxiv\",\n      description: \"Search arXiv for recent AI research papers. Use sparingly, only for breakthrough practical releases.\",\n      parameters: {\n        type: \"object\",\n        properties: {\n          query: { type: \"string\", description: \"Search query\" },\n          max_results: { type: \"integer\", description: \"Number of results to return\", default: 5 }\n        },\n        required: [\"query\"]\n      }\n    }\n  },\n  {\n    type: \"function\",\n    function: {\n      name: \"search_hackernews\",\n      description: \"Search HackerNews for AI industry news, product launches, project walkthroughs, interview experiences.\",\n      parameters: {\n        type: \"object\",\n        properties: {\n          query: { type: \"string\", description: \"Search query\" },\n          limit: { type: \"integer\", description: \"Number of results\", default: 5 }\n        },\n        required: [\"query\"]\n      }\n    }\n  },\n  {\n    type: \"function\",\n    function: {\n      name: \"fetch_rss\",\n      description: \"Fetch articles from an RSS feed.\",\n      parameters: {\n        type: \"object\",\n        properties: {\n          feed_url: { type: \"string\", description: \"Full RSS feed URL\" },\n          limit: { type: \"integer\", description: \"Number of articles to return\", default: 3 }\n        },\n        required: [\"feed_url\"]\n      }\n    }\n  }\n];\n\nreturn [{ \n  json: { \n    messages,\n    tools,\n    search_brief: brief.search_brief,\n    run_manifest: brief.run_manifest\n  } \n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        -176
+      ],
+      "id": "38f20678-0737-4fbe-a4f2-c4933d51186d",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ model: \"gpt-4o\", messages: $json.messages, tools: $json.tools, tool_choice: \"auto\" }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1696,
+        -160
+      ],
+      "id": "4bd6c02d-d043-4330-bbba-5f53e2be3e8b",
+      "name": "HTTP Request",
+      "credentials": {
+        "openAiApi": {
+          "id": "zn5D8ertjf16OZ5T",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "56a8f051-c7ea-4a43-ae27-8621bc7bc15d",
+              "leftValue": "={{ $json.choices[0].finish_reason }}",
+              "rightValue": "tool_calls",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1904,
+        32
+      ],
+      "id": "f4f612b2-cfca-40d9-a147-adddb18aa735",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\n\n// Get all tool calls GPT-4o wants to make\nconst toolCalls = response.choices[0].message.tool_calls;\n\n// Get the full messages array from earlier in the workflow\nconst existingMessages = $input.first().json;\n\n// Format each tool call as a separate item\nreturn toolCalls.map(toolCall => ({\n  json: {\n    tool_call_id: toolCall.id,\n    tool_name: toolCall.function.name,\n    tool_arguments: JSON.parse(toolCall.function.arguments),\n    // Pass the full response so we can build message history later\n    full_response: response\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2128,
+        -96
+      ],
+      "id": "34f7aeb2-825d-468f-8abd-1249e7b0a0d2",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.tool_name }}",
+                    "rightValue": "search_arxiv",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "a96598d0-13ef-42d3-8913-9833d35fd635"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f5275218-dd7e-4840-aa59-b44d4ad7597d",
+                    "leftValue": "={{ $json.tool_name }}",
+                    "rightValue": "search_hackernews",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "cc923410-469b-4384-83b1-bd8a1f34bede",
+                    "leftValue": "={{ $json.tool_name }}",
+                    "rightValue": "fetch_rss",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2320,
+        64
+      ],
+      "id": "eed9c57d-13cd-40c4-9ac8-5b9fa6141a37",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "url": "=https://export.arxiv.org/api/query?search_query=all:{{ $json.tool_arguments.query }}&max_results={{ $json.tool_arguments.max_results || 5 }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2528,
+        16
+      ],
+      "id": "8fc6f12b-0338-4c38-af40-1f77005c1e1c",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "url": "=http://hn.algolia.com/api/v1/search?query={{ $json.tool_arguments.query }}&tags=story&hitsPerPage={{ $json.tool_arguments.limit || 5 }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2528,
+        208
+      ],
+      "id": "6b1016c9-8fba-46c5-82fc-34e7ef9cc35a",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2752,
+        -208
+      ],
+      "id": "a2e0e68f-9a73-4570-b6f9-79287d8be16f",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\n// Validated RSS URL lookup table\nconst RSS_URLS = {\n  \"lenny newsletter\": \"https://www.lennysnewsletter.com/feed\",\n  \"lenny's newsletter\": \"https://www.lennysnewsletter.com/feed\",\n  \"stratechery\": \"https://stratechery.com/feed\",\n  \"the product compass\": \"https://www.theproductcompass.com/feed\",\n  \"aakash gupta\": \"https://aakashg.substack.com/feed\",\n  \"import ai\": \"https://importai.substack.com/feed\",\n  \"the batch\": \"https://www.deeplearning.ai/the-batch/feed/\",\n  \"tldr ai\": \"https://tldr.tech/ai/rss\",\n  \"latent space\": \"https://www.latent.space/feed\"\n};\n\n// Get the feed_url GPT-4o requested\nconst requestedUrl = item.tool_arguments.feed_url || \"\";\nconst requestedSource = item.tool_arguments.source_name || \"\";\n\n// Try to match against our lookup table\nlet resolvedUrl = requestedUrl;\n\nfor (const [key, url] of Object.entries(RSS_URLS)) {\n  if (requestedUrl.toLowerCase().includes(key) || \n      requestedSource.toLowerCase().includes(key)) {\n    resolvedUrl = url;\n    break;\n  }\n}\n\n// If URL looks wrong (no lennysnewsletter, no stratechery etc) use default\nconst validDomains = ['lennysnewsletter', 'stratechery', 'theproductcompass', \n                       'aakashg', 'importai', 'deeplearning', 'tldr', 'latent'];\nconst isValidUrl = validDomains.some(domain => resolvedUrl.includes(domain));\n\nif (!isValidUrl) {\n  // Default to Lenny if URL is unrecognized\n  resolvedUrl = \"https://www.lennysnewsletter.com/feed\";\n}\n\nreturn [{ \n  json: { \n    ...item,\n    tool_arguments: {\n      ...item.tool_arguments,\n      feed_url: resolvedUrl\n    }\n  } \n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2432,
+        400
+      ],
+      "id": "1ddb620c-28a3-4edb-8e54-4dc93751598b",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "url": "https://www.lennysnewsletter.com/feed",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2608,
+        416
+      ],
+      "id": "417acc93-5231-4b4a-8da5-eecc654b26b6",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nlet allArticles = [];\nitems.forEach((item, index) => {\n  const data = item.json;\n  if (data.hits) {\n    data.hits.forEach(h => {\n      if (h.title) allArticles.push({\n        title: h.title,\n        url: h.url || (h.objectID ? `https://news.ycombinator.com/item?id=${h.objectID}` : ''),\n        source: 'HackerNews',\n        summary: h.story_text || h.comment_text || ''\n      });\n    });\n  } else if (data.data && typeof data.data === 'string') {\n    const entries = data.data.match(/<entry>([\\s\\S]*?)<\\/entry>/g) || [];\n    entries.forEach(entry => {\n      const title   = (entry.match(/<title>([\\s\\S]*?)<\\/title>/)    || [])[1] || '';\n      const summary = (entry.match(/<summary>([\\s\\S]*?)<\\/summary>/) || [])[1] || '';\n      const link    = (entry.match(/<id>([\\s\\S]*?)<\\/id>/)           || [])[1] || '';\n      if (title) allArticles.push({\n        title: title.trim(),\n        url: link.trim(),\n        source: 'arXiv',\n        summary: summary.trim().substring(0, 300)\n      });\n    });\n  } else {\n    const rssItems = data.data\n      ? (data.data.match(/<item>([\\s\\S]*?)<\\/item>/g) || [])\n      : [];\n    rssItems.forEach(rssItem => {\n      const title = (rssItem.match(/<title><!\\[CDATA\\[(.*?)\\]\\]><\\/title>/) ||\n                     rssItem.match(/<title>(.*?)<\\/title>/) || [])[1] || '';\n      const link  = (rssItem.match(/<link>(.*?)<\\/link>/) || [])[1] || '';\n      const desc  = (rssItem.match(/<description><!\\[CDATA\\[(.*?)\\]\\]><\\/description>/) ||\n                     rssItem.match(/<description>(.*?)<\\/description>/) || [])[1] || '';\n      if (title) allArticles.push({\n        title: title.trim(),\n        url: link.trim(),\n        source: 'RSS',\n        summary: desc.replace(/<[^>]+>/g, '').trim().substring(0, 300)\n      });\n    });\n  }\n});\n\nconst articleList = allArticles.map((a, i) =>\n  `Article ${i+1}:\nTitle: ${a.title}\nURL: ${a.url}\nSource: ${a.source}\nSummary: ${a.summary}`\n).join('\\n\\n');\n\nconst payload = JSON.stringify({\n  model: \"gpt-4o\",\n  messages: [\n    {\n      role: \"system\",\n      content: `You are a Ranker Agent for an AI PM learning system.\nGiven a list of articles, select the TOP 2 most relevant for an AI PM targeting FAANG.\nPrefer: project walkthroughs, opinion pieces, interview experiences, product news.\nAvoid: academic papers, deep technical content, anything with code.\nScore each on relevance (1-10) and explain why.\nReturn ONLY 2 articles. Return ONLY valid JSON: {\"ranked_articles\": [{\"title\": \"...\", \"url\": \"...\", \"source\": \"...\", \"topic\": \"...\", \"summary\": \"...\", \"score\": 9, \"reason\": \"...\"}]}`\n    },\n    {\n      role: \"user\",\n      content: `Rank these articles for an AI PM targeting FAANG in NYC:\\n\\n${articleList}`\n    }\n  ]\n});\n\nreturn [{ json: { \n  payload, \n  article_count: allArticles.length,\n  run_manifest: $('Code in JavaScript2').first().json.run_manifest\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2960,
+        -16
+      ],
+      "id": "2495fdd6-5534-430b-b8a1-e2d60d4eb010",
+      "name": "Code in JavaScript5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.payload }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3232,
+        480
+      ],
+      "id": "be7aae29-f526-499c-a3ae-67fc2f01fd83",
+      "name": "HTTP Request4",
+      "credentials": {
+        "openAiApi": {
+          "id": "zn5D8ertjf16OZ5T",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pass payload string through for HTTP Request5 to send raw\nconst { payload } = $input.first().json;\nreturn [{ json: { payload } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3024,
+        368
+      ],
+      "id": "5a68217d-ce3f-4413-a756-ddc71cd24a3e",
+      "name": "Code in JavaScript6"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst response = items[0].json;\n\n// GPT-4o answered directly without tool calls\nconst content = response.choices[0].message.content;\n\nreturn [{ json: { \n  direct_response: content,\n  finish_reason: response.choices[0].finish_reason\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        656
+      ],
+      "id": "528f6796-5efc-43c9-9134-6b22c8a80e6e",
+      "name": "Code in JavaScript7"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst content = response.choices[0].message.content;\n\nlet ranked_articles = [];\ntry {\n  const jsonMatch = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  const cleaned = jsonMatch ? jsonMatch[1] : content;\n  const parsed = JSON.parse(cleaned);\n  ranked_articles = parsed.ranked_articles || [];\n} catch(e) {\n  ranked_articles = [];\n}\n\nreturn [{ json: { ranked_articles, count: ranked_articles.length } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3488,
+        656
+      ],
+      "id": "1519aed9-e447-4011-9b62-73ff57f8aa4f",
+      "name": "Code in JavaScript8"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.payload }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3968,
+        208
+      ],
+      "id": "4d622c9c-6ec2-4849-8a9e-c31fc67aa6e9",
+      "name": "HTTP Request5",
+      "credentials": {
+        "openAiApi": {
+          "id": "zn5D8ertjf16OZ5T",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const { ranked_articles } = $input.first().json;\n\nconst articleList = ranked_articles.map((a, i) =>\n  `Article ${i+1}:\nTitle: ${a.title}\nURL: ${a.url}\nSource: ${a.source}\nTopic: ${a.topic}\nSummary: ${a.summary}`\n).join('\\n\\n');\n\nconst payload = JSON.stringify({\n  model: \"gpt-4o\",\n  messages: [\n    {\n      role: \"system\",\n      content: `You are an Explainer Agent for an AI PM learning system. \nFor each article, write a PM-focused brief with exactly these 4 fields:\n1. tldr: 2 sentence plain English summary\n2. why_it_matters: 1 sentence — why an AI PM at FAANG should care\n3. key_term: one technical term explained simply in 1 sentence\n4. product_opportunity: one product idea this article inspires\n\nReturn ONLY valid JSON: {\"explained_articles\": [{\"title\": \"...\", \"url\": \"...\", \"tldr\": \"...\", \"why_it_matters\": \"...\", \"key_term\": \"...\", \"product_opportunity\": \"...\"}]}`\n    },\n    {\n      role: \"user\",\n      content: `User is an AI PM targeting FAANG in NYC.\\n\\nArticles:\\n${articleList}`\n    }\n  ]\n});\n\nreturn [{ json: { payload, ranked_articles } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4032,
+        512
+      ],
+      "id": "6d1e5d25-a1f4-47e0-8555-dfe379978224",
+      "name": "Code in JavaScript9"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst content = response.choices[0].message.content;\n\nlet explained_articles = [];\ntry {\n  const jsonMatch = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  const cleaned = jsonMatch ? jsonMatch[1] : content;\n  const parsed = JSON.parse(cleaned);\n  explained_articles = parsed.explained_articles || [];\n} catch(e) {\n  explained_articles = [];\n}\n\nreturn [{ json: { explained_articles, count: explained_articles.length } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4176,
+        208
+      ],
+      "id": "0d814a78-47ec-4b6f-a9b7-0e5f93ce3788",
+      "name": "Code in JavaScript10"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { explained_articles } = $input.first().json;\n\nconst articleList = explained_articles.map((a, i) =>\n  `Article ${i+1}: ${a.title}\\nTLDR: ${a.tldr}\\nWhy it matters: ${a.why_it_matters}`\n).join('\\n\\n');\n\nconst payload = JSON.stringify({\n  model: \"gpt-4o\",\n  messages: [\n    {\n      role: \"system\",\n      content: `You are a Quiz Agent for an AI PM learning system. For each article generate 3 questions:\n1. Factual: what happened/was released?\n2. Application: how would you use this in a product?\n3. Opinion: what is the biggest risk or opportunity?\nReturn ONLY valid JSON: {\"quizzes\": [{\"title\": \"...\", \"questions\": [\"q1\", \"q2\", \"q3\"], \"model_answers\": [\"a1\", \"a2\", \"a3\"]}]}`\n    },\n    {\n      role: \"user\",\n      content: `Generate quiz questions for these articles:\\n\\n${articleList}`\n    }\n  ]\n});\n\nreturn [{ json: { payload, explained_articles } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4384,
+        208
+      ],
+      "id": "70e60d6f-d926-46d3-91f0-f8077eb3a986",
+      "name": "Code in JavaScript11"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.payload }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        4592,
+        208
+      ],
+      "id": "96405ab4-1cc6-4b50-86e3-995ce9f63c40",
+      "name": "HTTP Request6",
+      "credentials": {
+        "openAiApi": {
+          "id": "zn5D8ertjf16OZ5T",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst content = response.choices[0].message.content;\nlet quizzes = [];\n\ntry {\n  const jsonMatch = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  const cleaned = jsonMatch ? jsonMatch[1] : content;\n  const parsed = JSON.parse(cleaned);\n  quizzes = parsed.quizzes || [];\n} catch(e) {\n  quizzes = [];\n}\n\n// Extract flat arrays across all quizzes\nconst quiz_questions = quizzes.flatMap(q => q.questions || []);\nconst correct_answers = quizzes.flatMap(q => q.model_answers || []);\n\nconst explained_articles = $('Code in JavaScript11').first().json.explained_articles || [];\n\nconst payload = JSON.stringify({\n  model: \"gpt-4o\",\n  messages: [{ role: \"user\", content: \"Say OK\" }],\n  max_tokens: 5\n});\n\nreturn [{ json: { quizzes, quiz_questions, correct_answers, explained_articles, payload } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4800,
+        208
+      ],
+      "id": "df0e52a1-81fc-4ef1-820e-ea79f7d5d1b2",
+      "name": "Code in JavaScript12"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.payload }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        5008,
+        208
+      ],
+      "id": "aae05ca5-3c30-4a93-9833-3dd294926d8b",
+      "name": "HTTP Request7",
+      "credentials": {
+        "openAiApi": {
+          "id": "zn5D8ertjf16OZ5T",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const { quizzes, explained_articles } = $('Code in JavaScript12').first().json;\n\nlet html = `\n<div style=\"font-family:sans-serif;max-width:680px;margin:0 auto;color:#1a1a1a\">\n  <h2 style=\"color:#4F46E5\">Your Daily AI PM Digest</h2>\n  <p style=\"color:#666;margin-top:-8px\"><em>Curated by your AI Learning Agent · ${new Date().toDateString()}</em></p>\n  <hr style=\"border:none;border-top:1px solid #eee;margin:16px 0\">\n`;\n\nquizzes.forEach((quiz, i) => {\n  const article = explained_articles[i] || {};\n\n  html += `\n  <div style=\"margin-bottom:36px\">\n    <h3 style=\"color:#111;margin-bottom:4px\">${i+1}. ${quiz.title}</h3>\n\n    ${article.url ? `\n    <a href=\"${article.url}\" style=\"display:inline-block;margin-bottom:12px;color:#4F46E5;font-size:14px;text-decoration:none;border:1px solid #4F46E5;padding:6px 14px;border-radius:6px;\">\n      📖 Read the full article →\n    </a>` : ''}\n\n    ${article.tldr ? `\n    <div style=\"background:#F5F3FF;border-left:3px solid #4F46E5;padding:12px 16px;margin:12px 0;border-radius:0 8px 8px 0\">\n      <strong style=\"color:#4F46E5;font-size:12px;text-transform:uppercase;letter-spacing:0.5px\">What to understand</strong>\n      <p style=\"margin:6px 0 0;line-height:1.6;color:#333\">${article.tldr}</p>\n    </div>` : ''}\n\n    ${article.why_it_matters ? `\n    <div style=\"background:#FFF7ED;border-left:3px solid #F59E0B;padding:12px 16px;margin:12px 0;border-radius:0 8px 8px 0\">\n      <strong style=\"color:#B45309;font-size:12px;text-transform:uppercase;letter-spacing:0.5px\">Why it matters for PMs</strong>\n      <p style=\"margin:6px 0 0;line-height:1.6;color:#333\">${article.why_it_matters}</p>\n    </div>` : ''}\n\n    ${article.key_term ? `\n    <div style=\"background:#F0FDF4;border-left:3px solid #22C55E;padding:12px 16px;margin:12px 0;border-radius:0 8px 8px 0\">\n      <strong style=\"color:#15803D;font-size:12px;text-transform:uppercase;letter-spacing:0.5px\">Key term</strong>\n      <p style=\"margin:6px 0 0;line-height:1.6;color:#333\">${article.key_term}</p>\n    </div>` : ''}\n\n    ${article.product_opportunity ? `\n    <div style=\"background:#EFF6FF;border-left:3px solid #3B82F6;padding:12px 16px;margin:12px 0;border-radius:0 8px 8px 0\">\n      <strong style=\"color:#1D4ED8;font-size:12px;text-transform:uppercase;letter-spacing:0.5px\">Product opportunity</strong>\n      <p style=\"margin:6px 0 0;line-height:1.6;color:#333\">${article.product_opportunity}</p>\n    </div>` : ''}\n\n    <div style=\"margin-top:16px\">\n      <strong style=\"color:#111;font-size:14px\">✏️ Quiz yourself</strong>\n      <ol style=\"margin-top:8px;padding-left:20px;line-height:2;color:#333\">\n        ${quiz.questions.map(q => `<li>${q}</li>`).join('')}\n      </ol>\n    </div>\n  </div>\n  <hr style=\"border:none;border-top:1px solid #eee;margin:0 0 36px\">\n  `;\n});\n\nhtml += `\n  <div style=\"background:#F9FAFB;padding:16px;border-radius:8px;margin-top:8px\">\n    <p style=\"margin:0;color:#555;font-size:14px\">\n      📬 <strong>Reply to this email</strong> with your quiz answers and your learning profile will update automatically.<br>\n      <span style=\"color:#999;font-size:12px\">Format: \"1. [answer] 2. [answer] 3. [answer]\" for each article</span>\n    </p>\n  </div>\n  <p style=\"color:#ccc;font-size:11px;margin-top:24px;text-align:center\">Generated by your AI Learning Agent</p>\n</div>`;\n\nreturn [{ json: { html, subject: `AI PM Daily Digest — ${new Date().toDateString()}` } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5216,
+        208
+      ],
+      "id": "703573d0-08a0-49bf-9177-4995d7510ead",
+      "name": "Code in JavaScript13"
+    },
+    {
+      "parameters": {
+        "sendTo": "vani.batra88@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        5632,
+        208
+      ],
+      "id": "2271de54-326a-49a1-92e0-13e75247a1e4",
+      "name": "Send a message",
+      "webhookId": "bcfea5f6-7fac-4bb7-9201-2dfc077319b2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yURouVoWnYBRoaSi",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appTlz5lbtlAEdDVs",
+          "mode": "list",
+          "cachedResultName": "AI Learning Agent",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblq2XiAlcOk6YzdU",
+          "mode": "list",
+          "cachedResultName": "interactions",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs/tblq2XiAlcOk6YzdU"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "thread_id": "={{ $node[\"Send a message\"].json.threadId }}",
+            "action": "quiz_completed",
+            "time_spent_seconds": 0,
+            "quiz_score": 0,
+            "user_rating": 0,
+            "quiz_questions": "={{ JSON.stringify($('Code in JavaScript12').first().json.quiz_questions) }}",
+            "correct_answers": "={{ JSON.stringify($('Code in JavaScript12').first().json.correct_answers) }}",
+            "timestamp": "={{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "interaction_id",
+              "displayName": "interaction_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "article_id",
+              "displayName": "article_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "read",
+                  "value": "read"
+                },
+                {
+                  "name": "skipped",
+                  "value": "skipped"
+                },
+                {
+                  "name": "quiz_attempted",
+                  "value": "quiz_attempted"
+                },
+                {
+                  "name": "quiz_completed",
+                  "value": "quiz_completed"
+                },
+                {
+                  "name": "marked_saved",
+                  "value": "marked_saved"
+                },
+                {
+                  "name": "rated",
+                  "value": "rated"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "time_spent_seconds",
+              "displayName": "time_spent_seconds",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "quiz_score",
+              "displayName": "quiz_score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "user_rating",
+              "displayName": "user_rating",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "thread_id",
+              "displayName": "thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "quiz_questions",
+              "displayName": "quiz_questions",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "correct_answers",
+              "displayName": "correct_answers",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        5840,
+        208
+      ],
+      "id": "ab581e8c-b856-4473-a94a-d0ee2e49d77f",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "znwzmo63t8zQipXv",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 23
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        352,
+        128
+      ],
+      "id": "042825de-1576-469f-b4b2-c72b3d70e835",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "35ccfce7-0ca1-4fd7-be87-f146bcc6a208",
+              "leftValue": "={{ $json.article_count }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3168,
+        -16
+      ],
+      "id": "85147a1b-d906-49c3-ac0c-ffc645b1887d",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "014abe68-6f41-4cea-bdee-5858fda02ee4",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3840,
+        800
+      ],
+      "id": "7e045439-8759-4eb0-970e-fef15b537121",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0b68f842-8684-4683-84d1-fcb6398b0a21",
+              "leftValue": "={{ $json.html.length }}",
+              "rightValue": 500,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5424,
+        208
+      ],
+      "id": "5d7fc154-c66c-4a71-826a-25978be36020",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "sendTo": "vani.batra88@gmail.com",
+        "subject": "AI Digest failed — Scout found too few articles",
+        "message": "=<p>Run date: {{ new Date().toDateString() }}</p>\n<p>Check your n8n execution log for details.</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3376,
+        80
+      ],
+      "id": "76ed0813-677c-4c10-882b-46a1f608ebfe",
+      "name": "Send a message1",
+      "webhookId": "77dab96e-d508-4e20-9d6d-635a56a05e48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yURouVoWnYBRoaSi",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "vani.batra88@gmail.com",
+        "subject": " AI Digest failed — HTML too short, email not sent",
+        "message": "=<p>Run date: {{ new Date().toDateString() }}</p>\n<p>Check your n8n execution log for details.</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        5552,
+        352
+      ],
+      "id": "5fd78105-e0f4-491e-8300-361c4b69d723",
+      "name": "Send a message2",
+      "webhookId": "1ae9ce5b-660a-4d23-93c2-ad8f4b3036e2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yURouVoWnYBRoaSi",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const { quizzes, explained_articles } = $input.first().json;\nconst ranked_articles = $('Code in JavaScript8').first().json.ranked_articles;\n\nconst records = ranked_articles.map((article, i) => {\n  const explained = explained_articles[i] || {};\n  const quiz = quizzes[i] || {};\n\n  return {\n    json: {\n      title: article.title,\n      url: article.url,\n      source: article.source,\n      date_fetched: new Date().toISOString(),\n      date_delivered: new Date().toISOString(),\n      relevance_score: article.score,\n      signal_quality_score: article.score,\n      summary: article.summary,\n      why_it_matters: explained.why_it_matters || '',\n      quiz_questions: JSON.stringify(quiz.questions || []),\n      quiz_model_answers: JSON.stringify(quiz.model_answers || []),\n      topic_tags: article.topic,\n      status: 'delivered'\n    }\n  };\n});\n\nreturn records;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4912,
+        0
+      ],
+      "id": "2a384614-a046-46f9-a9d1-84e1c0f10ac3",
+      "name": "Code in JavaScript14"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appTlz5lbtlAEdDVs",
+          "mode": "list",
+          "cachedResultName": "AI Learning Agent",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxWCtqlJmHT3b1L",
+          "mode": "list",
+          "cachedResultName": "articles",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs/tblxWCtqlJmHT3b1L"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $json.title }}",
+            "url": "={{ $json.url }}",
+            "source": "={{ $json.source }}",
+            "date_fetched": "={{ $json.date_fetched }}",
+            "date_delivered": "={{ $json.date_delivered }}",
+            "relevance_score": "={{ $json.relevance_score }}",
+            "signal_quality_score": "={{ $json.signal_quality_score }}",
+            "summary": "={{ $json.summary }}",
+            "quiz_questions": "={{ $json.quiz_questions }}",
+            "quiz_model_answers": "={{ $json.quiz_model_answers }}",
+            "topic_tags": "={{ $json.topic_tags }}",
+            "status": "={{ $json.status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "article_id",
+              "displayName": "article_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "date_fetched",
+              "displayName": "date_fetched",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "relevance_score",
+              "displayName": "relevance_score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "novelty_score",
+              "displayName": "novelty_score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "why_it_matters",
+              "displayName": "why_it_matters",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "quiz_questions",
+              "displayName": "quiz_questions",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "quiz_model_answers",
+              "displayName": "quiz_model_answers",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "topic_tags",
+              "displayName": "topic_tags",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "fetched",
+                  "value": "fetched"
+                },
+                {
+                  "name": "shortlisted",
+                  "value": "shortlisted"
+                },
+                {
+                  "name": "delivered",
+                  "value": "delivered"
+                },
+                {
+                  "name": "read",
+                  "value": "read"
+                },
+                {
+                  "name": "skipped",
+                  "value": "skipped"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "signal_quality_score",
+              "displayName": "signal_quality_score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "date_delivered",
+              "displayName": "date_delivered",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        5120,
+        0
+      ],
+      "id": "71d9d1f3-fc12-4211-ad89-ef0f2f06f910",
+      "name": "Create a record1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "znwzmo63t8zQipXv",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search records1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript5": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript6": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request4": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript7": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript8": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript9": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request5": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript10": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript11",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript11": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request6": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript12": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request7",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code in JavaScript14",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request7": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript13",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript13": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript14": {
+      "main": [
+        [
+          {
+            "node": "Create a record1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "ebc956cb-63b8-4df8-b7d1-6a07aa9fa2a7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ad03376ca6090a8e93fea3a03c4df2a49611638dccfc9d0ad646e8f3548d5e80"
+  },
+  "id": "f5he9gAsskvolLpX",
+  "tags": []
+}

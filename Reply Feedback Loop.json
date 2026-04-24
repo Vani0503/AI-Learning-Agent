@@ -1,0 +1,1000 @@
+{
+  "name": "Reply Feedback Loop",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9fc76a60-291c-489d-bd4c-83a0641e2431",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yURouVoWnYBRoaSi",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const email = $input.item.json;\n\nconst threadId = email.threadId;\nconst snippet = email.snippet || '';\nconst subject = email.Subject || '';\n\n// Only process if subject has \"Re:\" - confirms it's a reply\nif (!subject.startsWith('Re:')) {\n  throw new Error('Not a reply email — skipping');\n}\n\nreturn [{\n  json: {\n    threadId,\n    snippet,\n    subject,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "58baf3c5-0b23-40db-9533-147e07dd27ce",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appTlz5lbtlAEdDVs",
+          "mode": "list",
+          "cachedResultName": "AI Learning Agent",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblq2XiAlcOk6YzdU",
+          "mode": "list",
+          "cachedResultName": "interactions",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs/tblq2XiAlcOk6YzdU"
+        },
+        "filterByFormula": "={thread_id} = \"{{ $json.threadId }}\"",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "bd870e96-f0fa-42a1-8199-da58affa9d84",
+      "name": "Search records",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "znwzmo63t8zQipXv",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f90ce5ff-2014-4b3c-840f-c8414d9a5ae8",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        0
+      ],
+      "id": "cfa25850-4a8b-494c-9dbf-3467d8ba3844",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "simple": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        -96
+      ],
+      "id": "e8fd9fdc-5522-49db-9e4f-1b353165d816",
+      "name": "Get a message",
+      "webhookId": "1f59dae2-0230-43ad-bd2d-bd27dcb3a0f4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yURouVoWnYBRoaSi",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const trigger = $('Gmail Trigger').item.json;\nconst snippet = trigger.snippet || '';\n\nconst clean = snippet.split(' On ')[0].trim();\n\nreturn [{ json: {\n  threadId: trigger.threadId,\n  reply_text: clean,\n  raw_snippet: snippet,\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        -96
+      ],
+      "id": "7300c2b9-6f71-4f4c-bd60-e2727a489773",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appTlz5lbtlAEdDVs",
+          "mode": "list",
+          "cachedResultName": "AI Learning Agent",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblq2XiAlcOk6YzdU",
+          "mode": "list",
+          "cachedResultName": "interactions",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs/tblq2XiAlcOk6YzdU"
+        },
+        "filterByFormula": "={thread_id} = \"{{ $json.threadId }}\"",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        -96
+      ],
+      "id": "ac82bc13-d0f0-4cd4-a699-829b2c2d8653",
+      "name": "Search records1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "znwzmo63t8zQipXv",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o\",\n  \"temperature\": 0.1,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a strict AI learning coach. A user received a daily learning digest with quiz questions and replied to it. Grade their reply against the questions and model answers provided. If the reply is vague (e.g. ok, got it, thanks) with no substance — give understanding_level of 1-2. Only give high scores (7-10) if the user demonstrates actual understanding by mentioning specific concepts, asking smart questions, or explaining something back. Return a JSON object with: understanding_level (0-10), topics_understood (array of strings, empty if reply is vague), topics_to_reinforce (array of strings — always return at least 1), difficulty_adjustment (-1 = make easier, 0 = keep same, 1 = make harder), feedback (one encouraging but honest sentence).\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Quiz questions asked: {{ JSON.parse($node['Search records1'].json.quiz_questions) }}\\n\\nModel answers: {{ JSON.parse($node['Search records1'].json.correct_answers) }}\\n\\nUser's reply: {{ $node['Code in JavaScript1'].json.reply_text }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1456,
+        -96
+      ],
+      "id": "3484e300-72a6-4c85-bc80-4b866f6680f3",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "sl7STARsdGiAYxbZ",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.item.json;\nconst raw = response.choices[0].message.content;\n\n// Strip markdown code fences\nconst clean = raw.replace(/```json|```/g, '').trim();\nconst parsed = JSON.parse(clean);\n\nreturn [{ json: {\n  understanding_level: parsed.understanding_level,\n  topics_understood: parsed.topics_understood,\n  topics_to_reinforce: parsed.topics_to_reinforce,\n  difficulty_adjustment: parsed.difficulty_adjustment,\n  feedback: parsed.feedback,\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        -96
+      ],
+      "id": "94a3471c-a65f-4cbf-a65a-b167e7d12df7",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appTlz5lbtlAEdDVs",
+          "mode": "list",
+          "cachedResultName": "AI Learning Agent",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblq2XiAlcOk6YzdU",
+          "mode": "list",
+          "cachedResultName": "interactions",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs/tblq2XiAlcOk6YzdU"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $node[\"Search records1\"].json.id }}",
+            "quiz_score": "={{ $node[\"Code in JavaScript2\"].json.understanding_level }}",
+            "notes": "={{ $node[\"Code in JavaScript2\"].json.feedback }}",
+            "time_spent_seconds": 0,
+            "user_rating": 0
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "interaction_id",
+              "displayName": "interaction_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "article_id",
+              "displayName": "article_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "read",
+                  "value": "read"
+                },
+                {
+                  "name": "skipped",
+                  "value": "skipped"
+                },
+                {
+                  "name": "quiz_attempted",
+                  "value": "quiz_attempted"
+                },
+                {
+                  "name": "quiz_completed",
+                  "value": "quiz_completed"
+                },
+                {
+                  "name": "marked_saved",
+                  "value": "marked_saved"
+                },
+                {
+                  "name": "rated",
+                  "value": "rated"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "time_spent_seconds",
+              "displayName": "time_spent_seconds",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "quiz_score",
+              "displayName": "quiz_score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "user_rating",
+              "displayName": "user_rating",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "thread_id",
+              "displayName": "thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "quiz_questions",
+              "displayName": "quiz_questions",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "correct_answers",
+              "displayName": "correct_answers",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1872,
+        -96
+      ],
+      "id": "84f557ad-33ed-48f5-a718-c16a6baffa33",
+      "name": "Update record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "znwzmo63t8zQipXv",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appTlz5lbtlAEdDVs",
+          "mode": "list",
+          "cachedResultName": "AI Learning Agent",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl3sf6Bx4wlgCsdn",
+          "mode": "list",
+          "cachedResultName": "topic_weights",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs/tbl3sf6Bx4wlgCsdn"
+        },
+        "filterByFormula": "={topic} = \"{{ $json.normalized_topic }}\"",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2496,
+        -96
+      ],
+      "id": "168045bb-5ab6-4a99-baa7-dc3aa5da130a",
+      "name": "Search records2",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "znwzmo63t8zQipXv",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appTlz5lbtlAEdDVs",
+          "mode": "list",
+          "cachedResultName": "AI Learning Agent",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl3sf6Bx4wlgCsdn",
+          "mode": "list",
+          "cachedResultName": "topic_weights",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs/tbl3sf6Bx4wlgCsdn"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Search records2').first().json.id }}",
+            "avg_quiz_score": "={{ $('Code in JavaScript2').first().json.understanding_level }}",
+            "engagement_count": "={{ ($('Search records2').first().json.fields.engagement_count || 0) + 1 }}",
+            "skip_count": 0,
+            "weight": 0
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "topic",
+              "displayName": "topic",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "engagement_count",
+              "displayName": "engagement_count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "avg_quiz_score",
+              "displayName": "avg_quiz_score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "skip_count",
+              "displayName": "skip_count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_seen_date",
+              "displayName": "last_seen_date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "weight",
+              "displayName": "weight",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "trend",
+              "displayName": "trend",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "rising",
+                  "value": "rising"
+                },
+                {
+                  "name": "stable",
+                  "value": "stable"
+                },
+                {
+                  "name": "declining",
+                  "value": "declining"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2704,
+        -96
+      ],
+      "id": "641f0a21-ea25-4725-96c6-4d0230bf970a",
+      "name": "Update record1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "znwzmo63t8zQipXv",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "=json",
+        "specifyBody": "json",
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "jsonBody": "={\n  \"model\": \"gpt-4o\",\n  \"temperature\": 0,\n  \"max_tokens\": 20,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a topic normaliser. Return only the exact topic name from the list provided, nothing else. No explanation, no punctuation, no extra words.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Topic to map: {{ $node['Code in JavaScript2'].json.topics_understood[0] }}\\n\\nMap to exactly one from this list:\\nAI agents and orchestration, LLM evaluation frameworks, RAG, Multi-agent systems, Prompt engineering, Fine-tuning vs prompting, Vector databases, Multimodal product design, AI product metrics, Inference optimization, AI safety and alignment, LLM cost optimization, AI regulatory landscape\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2080,
+        -96
+      ],
+      "id": "c494b5d1-f407-46a0-bb77-36b4c9e41eda",
+      "name": "HTTP Request1",
+      "credentials": {
+        "openAiApi": {
+          "id": "zn5D8ertjf16OZ5T",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst normalized_topic = response.choices[0].message.content.trim();\n\nreturn [{ json: {\n  ...($('Code in JavaScript2').first().json),\n  normalized_topic\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        -96
+      ],
+      "id": "303afccb-ac23-4269-863d-62cab6889efa",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { understanding_level, topics_understood, feedback } = $input.first().json;\n\n// Pull the interaction record to get article context\nconst interaction = $('Search records1').first().json;\n\nconst records = (topics_understood || []).map(topic => {\n  return {\n    json: {\n      topic: topic,\n      concept_learned: feedback || '',\n      confidence_score: understanding_level,\n      article_id: interaction.article_id || '',\n      date_learned: new Date().toLocaleDateString('en-CA'),\n      retention_status: understanding_level >= 7 ? 'strong' : understanding_level >= 4 ? 'developing' : 'weak'\n    }\n  };\n});\n\nreturn records;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        -416
+      ],
+      "id": "371b7b66-74e9-42de-9811-0a4dd93404dd",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appTlz5lbtlAEdDVs",
+          "mode": "list",
+          "cachedResultName": "AI Learning Agent",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblY7B3D9yEyVaia0",
+          "mode": "list",
+          "cachedResultName": "knowledge_store",
+          "cachedResultUrl": "https://airtable.com/appTlz5lbtlAEdDVs/tblY7B3D9yEyVaia0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "topic": "={{ $json.topic }}",
+            "concept_learned": "={{ $json.concept_learned }}",
+            "confidence_score": "={{ $json.confidence_score }}",
+            "article_id": "={{ $json.article_id }}",
+            "date_learned": "={{ $json.date_learned }}",
+            "retention_status": "={{ $json.retention_status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "knowledge_id",
+              "displayName": "knowledge_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "topic",
+              "displayName": "topic",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "concept_learned",
+              "displayName": "concept_learned",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "confidence_score",
+              "displayName": "confidence_score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "article_id",
+              "displayName": "article_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "date_learned",
+              "displayName": "date_learned",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "retention_status",
+              "displayName": "retention_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "fresh",
+                  "value": "fresh"
+                },
+                {
+                  "name": "retained",
+                  "value": "retained"
+                },
+                {
+                  "name": "needs_review",
+                  "value": "needs_review"
+                },
+                {
+                  "name": "forgotten",
+                  "value": "forgotten"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2000,
+        -416
+      ],
+      "id": "28c8db40-a564-4d74-a1c0-e0723f1bb2cc",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "znwzmo63t8zQipXv",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a message": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Search records1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Update record",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update record": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records2": {
+      "main": [
+        [
+          {
+            "node": "Update record1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Search records2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "820c11ee-3846-4eb5-8236-12671303f1e2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ad03376ca6090a8e93fea3a03c4df2a49611638dccfc9d0ad646e8f3548d5e80"
+  },
+  "id": "gpUTxL06y9dlz2lh",
+  "tags": []
+}
