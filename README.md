@@ -1,143 +1,208 @@
-═══════════════════════════════════════════════════════════
-PROJECT: AI Learning Agent — Personal AI PM Knowledge OS
-═══════════════════════════════════════════════════════════
+# AI Learning Agent
 
-WHAT IT IS
-An autonomous multi-agent AI system that acts as a personal
-AI learning operating system for an AI PM. It finds relevant
-content daily, explains it in PM terms, tests retention,
-tracks a structured learning curriculum, benchmarks against
-industry peers, evaluates its own performance, and adapts
-its behavior based on how I interact with it over time.
+A personalized daily AI learning digest with a quiz feedback loop that adapts to how well you're actually learning, built on n8n, GPT-4o, and Airtable.
 
-WHY I BUILT IT
-Targeting FAANG AI PM roles in NYC. Built this to stay
-genuinely current on the AI landscape AND to get deep
-hands-on experience with: agentic AI, multi-agent
-orchestration, MCP tool use, n8n, evals, and memory
-architecture — the exact stack I need to understand
-as a product leader in this space.
+---
 
-WHAT MAKES IT AGENTIC (not just automation)
-→ Orchestrator reads memory before deciding what to search
-→ Scout uses MCP tools autonomously mid-reasoning
-→ Agents observe user behavior and adapt tomorrow's output
-→ Human-in-loop: Intent Agent asks what to learn today
-→ Feedback loop: quiz scores change future content selection
-→ Self-evaluation: system measures its own output quality
+## What this is
 
-────────────────────────────────────────────────────────────
-AGENTS (7 total)
-────────────────────────────────────────────────────────────
-1. Intent Agent     → asks what to learn today (6:45am)
-                      reads your reply via webhook
-2. Orchestrator     → reads memory, plans the day,
-                      delegates to all sub-agents, adapts
-3. Scout            → finds content via MCP tools
-                      (arXiv, HN, RSS, web scrape)
-4. Ranker           → scores + shortlists top 3 articles
-                      using memory + topic weights
-5. Explainer        → writes PM-focused summaries
-6. Quiz             → generates + scores retention questions
-7. Curriculum Agent → weekly: updates mastered/in-progress/
-                      backlog, sends learning report,
-                      benchmarks against AI PM peer level
+Most learning tools give you the same content regardless of how you're doing. This one doesn't.
 
-────────────────────────────────────────────────────────────
-MEMORY ARCHITECTURE — Airtable (6 tables)
-────────────────────────────────────────────────────────────
-user_profile     → topics, preferences, scores, streak
-articles         → content fetched, scored, summarized
-interactions     → every read/skip/quiz action logged
-knowledge_store  → structured record of what was learned
-curriculum       → mastered / in_progress / backlog buckets
-topic_weights    → per-topic engagement + quiz performance
+Every morning, it pulls articles from across the AI ecosystem, explains them at your level, and sends you a quiz. When you reply with your answers, it scores your understanding, figures out which concepts you're weak on, and quietly adjusts what it sends you tomorrow. Over time, it builds a picture of where you're strong and where you're not, and it changes the content mix accordingly.
 
-────────────────────────────────────────────────────────────
-EVALS PIPELINE (separate workflow)
-────────────────────────────────────────────────────────────
-→ Scout relevance score  (user rates articles 1–5)
-→ Explainer quality      (Claude-as-judge vs rubric)
-→ Quiz calibration       (score distribution over time)
-→ Adaptation quality     (week 1 vs week 4 behavior delta)
+It was built for one specific person, a PM upskilling in the ever-evolving landscape of LLMs, AI, and ML, across 13 topics in AI product management. Everything about the system, the sources it pulls from, the way it explains things, the topics it covers, is configured around that goal.
 
-────────────────────────────────────────────────────────────
-DELIVERY
-────────────────────────────────────────────────────────────
-Daily 6:45am  → Gmail: "What do you want to learn today?"
-Daily 7:15am  → Gmail: full digest (top 3 articles +
-                summaries + quiz questions)
-Weekly Sunday → Gmail: Learning Report (curriculum update
-                + peer benchmark + eval scores)
+---
 
-────────────────────────────────────────────────────────────
-TECH STACK
-────────────────────────────────────────────────────────────
-Orchestration  : n8n (cloud)
-AI / Agents    : OpenAI GPT-4o with tool use
-Memory         : Airtable (6-table schema)
-Delivery       : Gmail (via n8n OAuth)
-Data sources   : [TO FILL — you'll tell us]
-MCP Tools      : arXiv API, HackerNews API, RSS fetch,
-                 web scraper, Airtable R/W, Gmail send
+## The problem it solves
 
-────────────────────────────────────────────────────────────
-BUILD PHASES
-────────────────────────────────────────────────────────────
-Phase 1 (now)  : n8n + OpenAI + Airtable
-Phase 2        : Rebuild in Python + OpenAI SDK
-Phase 3        : Claude Code CLI
-Phase 4        : Full MCP server + advanced memory
+There's no shortage of AI content. The problem is that none of it knows who you are, what you already know, or what you actually need to work on next.
 
-────────────────────────────────────────────────────────────
-WHAT I LEARNED BUILDING THIS
-────────────────────────────────────────────────────────────
-[fill after completion — for README + LinkedIn]
-═══════════════════════════════════════════════════════════
+If you're a PM trying to get serious about AI, you're probably doing one of the following: subscribing to newsletters you skim and forget; taking courses that don't adapt when you're bored or when you're lost; saving articles to a read-later folder that never gets read; or using quiz apps that test isolated facts with no connection to your actual job.
 
-Execution:
-n8n link  http://localhost:5678
+This system replaces all of that with a single daily email that gets smarter the longer you use it. It knows which topics you're avoiding. It knows which ones you've already got. It adjusts without you having to manage it.
 
-Product Decisions Log — AI Learning Agent
-PD-001 — Memory backend: Airtable over a database
-Chose Airtable for the memory layer because it gives visual transparency into what the agent is storing and thinking. A PM should be able to see and edit the agent's memory without engineering help. Transparency over performance at this stage.
+---
 
-PD-002 — Six tables, not one
-Separated concerns deliberately — behavior (interactions) is stored separately from knowledge (knowledge_store) because they answer different questions. Behavior tells you what the user did. Knowledge tells you what the user understood. Conflating them would make querying messy and agent prompts less precise.
+## Why we built it this way
 
-PD-003 — Seeding curriculum manually
-The initial topic backlog was PM-curated, not AI-generated. This is intentional — the PM defines the learning goal, the agent executes toward it. Fully delegating curriculum design to AI removes accountability for what the user actually learns.
-PD-004 — topic_weights as a separate table
+**n8n for orchestration, not logic.** n8n is the backbone; it handles scheduling, Gmail polling, Airtable reads/writes, and wiring agents together. But the actual thinking (what topics to prioritise, how to rank articles, how to score a quiz reply) lives in GPT-4o. This keeps the system flexible: the logic can be upgraded by changing a prompt, not rewriting a workflow.
 
-Instead of computing relevance scores on the fly, we pre-compute and store weights per topic. This makes the Ranker faster and more transparent — you can open Airtable and see exactly why certain topics are being prioritized.
+**GPT-4o as the reasoning layer.** Every agent in this system is a GPT-4o call with a specific role and a specific output format. The Orchestrator plans. The Scout finds. The Ranker evaluates. The Explainer teaches. The Scorer assesses. Each one is isolated, which means each one can be improved independently.
 
-PD-005 — skip_count as a first-class signal
-Explicit negative signal (skipping) is tracked separately from positive signal (reading). Most recommendation systems underweight negative signals. We treat skips as equally important to reads.
+**Airtable as the memory layer.** Topic weights, quiz scores, article history, learning progress; all of it lives in Airtable. This was a deliberate choice over a database because it makes the system inspectable. You can open a table and see exactly why the agent decided to send you RAG content three days in a row. There's no black box.
 
-PD-007 — Memory package as a single clean JSON object
-Instead of passing raw Airtable rows to the Orchestrator, we format memory into a structured package first. This makes the Orchestrator prompt cleaner, reduces token usage, and makes the system easier to debug. Always transform data before passing it to an LLM
+**Email as the interface.** No app to open, no dashboard to check. The digest arrives in your inbox every morning. Your quiz reply is just a normal email reply. This was a deliberate UX decision; the lowest-friction interface possible so the habit actually sticks.
 
-Product Decision to log
-PD-006 — Token scopes as a PM consideration
-When designing integrations, PMs need to specify exact permission scopes required — not just "connect to Airtable." Under-scoped tokens cause silent failures. Scope requirements should be part of the technical spec.
+---
 
-PD-008 — Orchestrator output as structured JSON
-The Orchestrator always responds in JSON, never free text. This is a deliberate product decision — structured output means the next agent (Scout) can parse instructions reliably without prompt engineering around variable formats. Structured handoffs between agents are non-negotiable in multi-agent systems.
+## Architecture
 
-PD-009 — Always parse LLM output before passing between agents
-LLMs sometimes wrap JSON in markdown code blocks. Always add a parsing/cleaning step between agent handoffs. Never assume the output is clean. This prevents cascading failures downstream.
+```
+┌─────────────────────────────────────────────────────┐
+│                   WORKFLOW 1 — Daily Digest          │
+│                                                     │
+│  Schedule Trigger (daily)                           │
+│       │                                             │
+│       ▼                                             │
+│  Airtable Read ──► user_profile + topic_weights     │
+│       │                                             │
+│       ▼                                             │
+│  Orchestrator Agent (GPT-4o)                        │
+│  Builds search brief. Prioritises topics by weight. │
+│  Generates run manifest to track agent health.      │
+│       │                                             │
+│       ▼                                             │
+│  Quality Gate 1 ──── FAIL ──► Failure Email         │
+│       │                                             │
+│       ▼                                             │
+│  Scout Agent (GPT-4o)                               │
+│  Searches HackerNews, arXiv, The Batch,             │
+│  Stratechery, Lenny's Newsletter (live RSS).        │
+│  Returns candidate articles.                        │
+│       │                                             │
+│       ▼                                             │
+│  Quality Gate 2 ──── FAIL ──► Failure Email         │
+│       │                                             │
+│       ▼                                             │
+│  Ranker Agent (GPT-4o)                              │
+│  Scores articles on relevance, novelty, signal.     │
+│  Selects top 2. Writes to articles table.           │
+│       │                                             │
+│       ▼                                             │
+│  Quality Gate 3 ──── FAIL ──► Failure Email         │
+│       │                                             │
+│       ▼                                             │
+│  Explainer + Quiz Agent (GPT-4o)                    │
+│  Writes plain-English summary + 2 quiz questions    │
+│  with model answers per article.                    │
+│       │                                             │
+│       ▼                                             │
+│  Gmail Send ──► HTML digest email to user           │
+│       │                                             │
+│       ▼                                             │
+│  Airtable Write ──► interactions table              │
+│  (thread_id, quiz_questions, correct_answers)       │
+└─────────────────────────────────────────────────────┘
 
-PD-010 — GPT-4o autonomously decided tool call strategy
-Without being told which tools to call in which order, GPT-4o parallelized its search — calling arXiv and HackerNews simultaneously for both primary topics, then fetching RSS feeds. This is emergent agent behavior. The PM's job is to design the tools well enough that the model can reason about when to use them.
+┌─────────────────────────────────────────────────────┐
+│              WORKFLOW 2 — Reply Feedback Loop        │
+│                                                     │
+│  Gmail Trigger (polls hourly)                       │
+│       │                                             │
+│       ▼                                             │
+│  Extract reply text + thread_id                     │
+│       │                                             │
+│       ▼                                             │
+│  Airtable Lookup ──► fetch quiz from interactions   │
+│       │                                             │
+│       ▼                                             │
+│  Scorer Agent (GPT-4o)                              │
+│  Compares reply vs model answers.                   │
+│  Returns understanding_level (0-10), topics         │
+│  understood, topics to reinforce, feedback.         │
+│       │                                             │
+│       ▼                                             │
+│  Topic Normaliser Agent (GPT-4o)                    │
+│  Maps free-form topic names to canonical list.      │
+│  Ensures exact match before Airtable update.        │
+│       │                                             │
+│       ▼                                             │
+│  Airtable Updates:                                  │
+│  ├── interactions: quiz_score, notes                │
+│  ├── topic_weights: engagement_count, avg_quiz_score│
+│  └── knowledge_store: concept_learned, confidence  │
+└─────────────────────────────────────────────────────┘
+```
 
-PD-011 — Never trust LLMs to generate URLs
-GPT-4o hallucinated an incorrect RSS URL. LLMs should never be responsible for generating specific URLs — they should select from a pre-approved list. The PM's job is to constrain the agent's decisions to safe, validated options.
+**Stack:** n8n (hosted on Railway) for scheduling, Gmail, Airtable, and agent wiring; GPT-4o for all reasoning across orchestration, search, ranking, explanation, and scoring; Airtable for persistent memory across topic weights, quiz history, articles, and learning progress; Gmail for delivery and reply capture.
 
-Scout fetched content from 3 sources in one loop
-The agent autonomously parallelized its search — calling arXiv twice, HackerNews twice, and RSS twice in a single reasoning turn. This emergent parallelization wasn't instructed — it came from the model reading the search brief and deciding the most efficient strategy. This is why tool descriptions matter: good descriptions enable better agent reasoning.
+---
 
-PD-013 — Full agentic loop completed
-Scout went from search brief → autonomous tool calls → real data fetched → synthesized article list in one reasoning loop. The agent called 6 tools, observed 5 results, and produced structured output ready for the Ranker. This is the complete reason → act → observe → respond cycle working in production.
+## How it works day to day
 
-PD-015 — Full agentic pipeline delivered to inbox
-First successful end-to-end run. Memory → Orchestration → Scout (MCP tool use) → Rank → Explain → Quiz → Deliver. Total tokens used ~5,000. Estimated cost per daily run ~$0.15. The system is working.
+**Morning: the digest arrives**
+
+You get an email with two articles. Each one has a plain-English explanation and two quiz questions at the bottom. The articles were selected that morning based on which topics you're weakest on, which you haven't seen recently, and what your historical engagement looks like. End-to-end, Workflow 1 completes in roughly 25 to 30 seconds, makes approximately 5,500 tokens of GPT-4o calls across all agents, and costs under $0.03 per run; around $0.80 per month at daily cadence.
+
+**During the day: you reply**
+
+You reply to the email with your answers. It can be a sentence, a paragraph, a brain dump; the scorer handles free-form responses. You don't need to format anything.
+
+**Within the hour: it's scored**
+
+Workflow 2 picks up your reply, compares it against the model answers, and returns a score from 0 to 10 along with which concepts you understood and which need reinforcement. This takes roughly 6 to 8 seconds and updates your topic weights in Airtable automatically.
+
+**Tomorrow: the mix shifts**
+
+If you scored well on RAG but struggled with inference optimisation, tomorrow's digest will weight toward inference. If you haven't seen a topic in two weeks, it'll resurface. The adjustment is gradual and automatic; you don't configure anything.
+
+---
+
+## Airtable schema
+
+Six tables, each with a specific role in the system.
+
+**interactions** — One record per digest sent. Stores the thread_id that links a Gmail reply back to the correct quiz, the quiz questions and model answers as JSON, and the quiz score once the user replies.
+
+**topic_weights** — One record per topic across the 13 canonical topics. Tracks engagement count, average quiz score, skip count, last seen date, and a composite weight that drives Orchestrator decisions.
+
+**user_profile** — Static user context: role, target role, preferred sources, topics of interest. Fed into the Orchestrator prompt at the start of every Workflow 1 run.
+
+**articles** — Every article fetched, ranked, and delivered. Prevents duplicates. Tracks relevance score, novelty score, summary, and topic tags per article.
+
+**knowledge_store** — Concept-level learning log. Written to after every scored reply. Stores what concept was learned, confidence score, which article taught it, and retention status over time.
+
+**curriculum** — Structured learning plan across all 13 topics. Tracks priority, current level vs peer benchmark, and target completion dates. Intended to be updated automatically as quiz scores improve.
+
+**The 13 canonical topics:**
+AI agents and orchestration · LLM evaluation frameworks · RAG · Multi-agent systems · Prompt engineering · Fine-tuning vs prompting · Vector databases · Multimodal product design · AI product metrics · Inference optimization · AI safety and alignment · LLM cost optimization · AI regulatory landscape
+
+---
+
+## Current limitations
+
+**Topic suggestion is manual.** There's no agent yet that analyses quiz performance and suggests new topics to add. If your interests evolve or the field moves on, you update the topic list yourself.
+
+**Voice reply isn't supported.** You have to type your quiz answers as an email reply. A voice-to-text path (via Whisper API) was designed but not built; partly because the input channel (email can't natively accept audio) needs a UX decision first.
+
+**Industry curriculum alignment is static.** The 13 topics were defined once at setup. There's no agent that monitors what AI PMs at top tech companies are actually expected to know right now and adjusts the curriculum accordingly. That agent is designed but not built.
+
+---
+
+## Setup
+
+**Prerequisites**
+
+n8n instance (local or hosted; Railway recommended), an OpenAI API key with GPT-4o access, an Airtable account with base configured per the schema above, and a Gmail account with OAuth credentials.
+
+**Steps**
+1. Clone this repo
+2. Copy `.env.example` to `.env` and fill in your credentials
+3. Import both workflow JSONs into n8n
+4. Set up your Airtable base with the 6 tables and fields described above
+5. Populate `user_profile` with your details and `topic_weights` with starting weights for each of the 13 topics
+6. Activate Workflow 1; it will run on its daily schedule
+7. Activate Workflow 2; it will poll Gmail hourly for replies
+
+**Credentials needed**
+```
+OPENAI_API_KEY=
+AIRTABLE_API_KEY=
+AIRTABLE_BASE_ID=
+GMAIL_OAUTH_CREDENTIALS=
+```
+
+---
+
+## What's next
+
+The system is stable and running 24/7. Features on the backlog, roughly in priority order: richer content sourcing (more RSS feeds, direct URL browsing for Scout); token, cost, and latency tracking per run; curriculum table connected to workflow (auto-updates as scores improve); topic suggestion agent (analyses performance, proposes new topics for approval); industry curriculum alignment agent (monitors industry expectations, suggests updates); voice reply via Whisper API.
+
+---
+
+## About
+
+Built by Vani, a PM with 6 years of experience currently pursuing an MBA at Cornell. Vani is passionate about building user-centric products that leverage technology, and this project sits at the intersection of that: a learning system that actually adapts to the person using it, built with AI tooling as both the subject and the medium.
+
+Questions, feedback, or want to build something similar? Reach out on LinkedIn.
